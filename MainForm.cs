@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using HtmlAgilityPack;
@@ -992,7 +993,7 @@ namespace WeatherDiary
 
 		private void btnLoad_Click(object sender, EventArgs e)
 		{
-			String htmlCode = GetHtml("http://beta.gismeteo.ru/weather-kirov-4292/#/wind.precipitation.pressure.humidity/");
+			string htmlCode = GetHtml("https://www.gismeteo.ru/weather-kirov-4292/#/wind.precipitation.pressure.humidity/");
 			HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
 			doc.LoadHtml(htmlCode);
 
@@ -1011,38 +1012,34 @@ namespace WeatherDiary
 			}
 			catch
 			{
-
+				// ignored
 			}
 
 			Time[] time = new Time[9];
 			for (int i = 0; i < 9; i++)
 			{
-				time[i] = new Time();
-				time[i].title = divTime[0].ChildNodes[i].ChildNodes[0].FirstChild.InnerText + ":" + divTime[0].ChildNodes[i].ChildNodes[0].LastChild.InnerText;
-				time[i].cloud = divCloud[0].ChildNodes[i].ChildNodes[1].InnerText;
-				time[i].temp = divTemp[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-air"].Value;
-				time[i].windVelocity = divWind[0].ChildNodes[i + 1].ChildNodes[1].Attributes["data-value"].Value;
-				time[i].windDirection = "";
-				for (int j = 0; j < divWind[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes.Count; j++)
+				time[i] = new Time
 				{
-					for (int k = 0; k < divWind[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes[j].Attributes.Count; k++)
+					title = $"{divTime?[0].ChildNodes[i].ChildNodes[0].FirstChild.InnerText}:{divTime?[0].ChildNodes[i].ChildNodes[0].LastChild.InnerText}",
+					cloud = divCloud?[0].ChildNodes[i].ChildNodes[1].InnerText,
+					temp = divTemp?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value,
+					windVelocity = divWind?[0].ChildNodes[i + 1].ChildNodes[1].Attributes["data-value"].Value,
+					windDirection = ""
+				};
+				foreach (HtmlNode node in divWind?[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes)
+				{
+					foreach (HtmlAttribute attribute in node.Attributes.Where(attribute => attribute.Value == "item_unit"))
 					{
-						if (divWind[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes[j].Attributes[k].Value == "item_unit")
+						if (node.InnerText == "штиль")
 						{
-							if (divWind[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes[j].InnerText == "штиль")
-							{
-								time[i].windDirection = "ш";
-								break;
-							}
-							else
-							{
-								time[i].windDirection = divWind[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes[j].InnerText;
-								break;
-							}
+							time[i].windDirection = "ш";
+							break;
 						}
+						time[i].windDirection = node.InnerText;
+						break;
 					}
 				}
-				time[i].press = divPress[0].ChildNodes[1].ChildNodes[0].ChildNodes[i + 1].Attributes["data-pressure"].Value;
+				time[i].press = divPress?[0].ChildNodes[1].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value;
 			}
 
 			WeatherToForm(time);
