@@ -11,49 +11,53 @@ namespace WeatherDiary
 {
 	public partial class MainForm : Form
 	{
-		public struct Time
+		public class Time
 		{
-			public String title;
-			public String cloud;
-			public String temp;
-			public String windVelocity;
-			public String windDirection;
-			public String press;
+			public string title;
+			public string cloud;
+			public string temp;
+			public string windVelocity;
+			public string windDirection;
+			public string press;
 		}
-		public struct Year
+
+		public class Year
 		{
 			public int num;
 			public Month[] months;
 
 		}
-		public struct Month
+
+		public class Month
 		{
 			public int num;
 			public Day[] days;
 
 		}
-		public struct Day
+
+		public class Day
 		{
 			public int num;
 			public int temp;
-			public String cloud;
+			public string cloud;
 			public int press;
 			public int windVelocity;
-			public String windDirection;
-			public String prec;
+			public string windDirection;
+			public string prec;
 		}
-		Year[] years;
+
+		private Year[] years = new Year[0];
+
 		public MainForm()
 		{
 			InitializeComponent();
-			years = new Year[0];
 		}
 
 		private void Open()
 		{
 			if (!File.Exists("Дневник погоды.xml"))
 			{
-				MessageBox.Show("Файл 'Дневник погоды.xml' не был найден!");
+				MessageBox.Show(@"Файл 'Дневник погоды.xml' не был найден!");
 				return;
 			}
 			FileStream fileWeatherDiary = File.Open("Дневник погоды.xml", FileMode.Open);
@@ -72,83 +76,72 @@ namespace WeatherDiary
 
 		private void SetDayInfo()
 		{
-			Day day = new Day();
-			Month month = new Month();
-			Year year = new Year();
+			Day newDay = new Day();
+			Month newMonth = new Month();
+			Year newYear = new Year();
 			try
 			{
-				day.num = Calendar.SelectionRange.Start.Day;
-				day.temp = Convert.ToInt32(tbTemp.Text);
-				day.cloud = cbCloud.Text;
-				day.press = Convert.ToInt32(tbPress.Text);
-				day.windVelocity = Convert.ToInt32(tbWind.Text);
-				day.windDirection = cbWind.Text;
-				day.prec = cbPrec.Text;
-				month.num = Calendar.SelectionRange.Start.Month;
-				month.days = new Day[1];
-				month.days[0] = day;
-				year.num = Calendar.SelectionRange.Start.Year;
-				year.months = new Month[1];
-				year.months[0] = month;
+				newDay.num = Calendar.SelectionRange.Start.Day;
+				newDay.temp = Convert.ToInt32(tbTemp.Text);
+				newDay.cloud = cbCloud.Text;
+				newDay.press = Convert.ToInt32(tbPress.Text);
+				newDay.windVelocity = Convert.ToInt32(tbWind.Text);
+				newDay.windDirection = cbWind.Text;
+				newDay.prec = cbPrec.Text;
+				newMonth.num = Calendar.SelectionRange.Start.Month;
+				newMonth.days = new Day[1];
+				newMonth.days[0] = newDay;
+				newYear.num = Calendar.SelectionRange.Start.Year;
+				newYear.months = new Month[1];
+				newYear.months[0] = newMonth;
 			}
 			catch
 			{
-				MessageBox.Show("Проверьте правильность заполнения всех полей!");
+				MessageBox.Show(@"Проверьте правильность заполнения всех полей!");
 				return;
 			}
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == Calendar.SelectionRange.Start.Year)
+				if (year.num != Calendar.SelectionRange.Start.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != Calendar.SelectionRange.Start.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == Calendar.SelectionRange.Start.Month)
-						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								if (years[i].months[j].days[k].num == Calendar.SelectionRange.Start.Day)
-								{
-									years[i].months[j].days[k].temp = Convert.ToInt32(tbTemp.Text);
-									years[i].months[j].days[k].cloud = cbCloud.Text;
-									years[i].months[j].days[k].press = Convert.ToInt32(tbPress.Text);
-									years[i].months[j].days[k].windVelocity = Convert.ToInt32(tbWind.Text);
-									years[i].months[j].days[k].windDirection = cbWind.Text;
-									years[i].months[j].days[k].prec = cbPrec.Text;
-									return;
-								}
-							}
-							Array.Resize(ref years[i].months[j].days, years[i].months[j].days.Length + 1);
-							years[i].months[j].days[years[i].months[j].days.Length - 1] = day;
-							return;
-						}
+						if (day.num != Calendar.SelectionRange.Start.Day) continue;
+						day.temp = Convert.ToInt32(tbTemp.Text);
+						day.cloud = cbCloud.Text;
+						day.press = Convert.ToInt32(tbPress.Text);
+						day.windVelocity = Convert.ToInt32(tbWind.Text);
+						day.windDirection = cbWind.Text;
+						day.prec = cbPrec.Text;
+						return;
 					}
-					Array.Resize(ref years[i].months, years[i].months.Length + 1);
-					years[i].months[years[i].months.Length - 1] = month;
+					Array.Resize(ref month.days, month.days.Length + 1);
+					month.days[month.days.Length - 1] = newDay;
 					return;
 				}
+				Array.Resize(ref year.months, year.months.Length + 1);
+				year.months[year.months.Length - 1] = newMonth;
+				return;
 			}
 			Array.Resize(ref years, years.Length + 1);
-			years[years.Length - 1] = year;
-			return;
+			years[years.Length - 1] = newYear;
 		}
 
 		private Day FindDay(DateTime dt)
 		{
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == dt.Year)
+				if (year.num != dt.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != dt.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == dt.Month)
+						if (day.num == dt.Day)
 						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								if (years[i].months[j].days[k].num == dt.Day)
-								{
-									return years[i].months[j].days[k];
-								}
-							}
+							return day;
 						}
 					}
 				}
@@ -159,19 +152,10 @@ namespace WeatherDiary
 		private void GetDayInfo()
 		{
 			Day day = FindDay(Calendar.SelectionRange.Start);
-			String str = "";
-			if (day.temp > 0)
-			{
-				str = "+";
-			}
-			if (day.temp < 0)
-			{
-				str = "-";
-			}
-			lblTempDay.Text = str + day.temp.ToString() + "°С";
+			lblTempDay.Text = (day.temp > 0 ? "+" : "") + $@"{day.temp}°С";
 			lblCloudDay.Text = day.cloud;
-			lblPressDay.Text = day.press.ToString() + " мм.рт.ст.";
-			lblWindDay.Text = day.windVelocity.ToString() + " м/с; " + day.windDirection;
+			lblPressDay.Text = $@"{day.press} мм.рт.ст.";
+			lblWindDay.Text = $@"{day.windVelocity} м/с; {day.windDirection}";
 			lblPrecDay.Text = day.prec;
 			tbTemp.Text = day.temp.ToString();
 			cbCloud.Text = day.cloud;
@@ -187,22 +171,13 @@ namespace WeatherDiary
 			{
 				return;
 			}
-			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day.ToString() +
-				"." + Calendar.SelectionRange.Start.Month.ToString() + "." + cbDayInYear.Text);
+			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day +
+				"." + Calendar.SelectionRange.Start.Month + "." + cbDayInYear.Text);
 			Day day = FindDay(dt);
-			String str = "";
-			if (day.temp > 0)
-			{
-				str = "+";
-			}
-			if (day.temp < 0)
-			{
-				str = "-";
-			}
-			lblTempDayInYear.Text = str + day.temp.ToString() + "°С";
+			lblTempDayInYear.Text = (day.temp > 0 ? "+" : "") + $@"{day.temp}°С";
 			lblCloudDayInYear.Text = day.cloud;
-			lblPressDayInYear.Text = day.press.ToString() + " мм.рт.ст.";
-			lblWindDayInYear.Text = day.windVelocity.ToString() + " м/с; " + day.windDirection;
+			lblPressDayInYear.Text = $@"{day.press} мм.рт.ст.";
+			lblWindDayInYear.Text = $@"{day.windVelocity} м/с; {day.windDirection}";
 			lblPrecDayInYear.Text = day.prec;
 		}
 
@@ -215,36 +190,23 @@ namespace WeatherDiary
 			double temp = 0.0;
 			double press = 0.0;
 			double velocity = 0.0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == Calendar.SelectionRange.Start.Year)
+				if (year.num != Calendar.SelectionRange.Start.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != Calendar.SelectionRange.Start.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == Calendar.SelectionRange.Start.Month)
-						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								temp += (double)years[i].months[j].days[k].temp / (double)years[i].months[j].days.Length;
-								press += (double)years[i].months[j].days[k].press / (double)years[i].months[j].days.Length;
-								velocity += (double)years[i].months[j].days[k].windVelocity / (double)years[i].months[j].days.Length;
-							}
-						}
+						temp += (double)day.temp / month.days.Length;
+						press += (double)day.press / month.days.Length;
+						velocity += (double)day.windVelocity / month.days.Length;
 					}
 				}
 			}
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempMonth.Text = str + temp.ToString("##.00") + "°С";
-			lblPressMonth.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindMonth.Text = velocity.ToString("##.00") + " м/с";
+			lblTempMonth.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressMonth.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindMonth.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetMonthInYearInfo()
@@ -253,41 +215,28 @@ namespace WeatherDiary
 			{
 				return;
 			}
-			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day.ToString() +
-				"." + Calendar.SelectionRange.Start.Month.ToString() + "." + cbMonthInYear.Text);
+			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day +
+				"." + Calendar.SelectionRange.Start.Month + "." + cbMonthInYear.Text);
 			double temp = 0.0;
 			double press = 0.0;
 			double velocity = 0.0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == dt.Year)
+				if (year.num != dt.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != dt.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == dt.Month)
-						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								temp += (double)years[i].months[j].days[k].temp / (double)years[i].months[j].days.Length;
-								press += (double)years[i].months[j].days[k].press / (double)years[i].months[j].days.Length;
-								velocity += (double)years[i].months[j].days[k].windVelocity / (double)years[i].months[j].days.Length;
-							}
-						}
+						temp += (double)day.temp / month.days.Length;
+						press += (double)day.press / month.days.Length;
+						velocity += (double)day.windVelocity / month.days.Length;
 					}
 				}
 			}
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempMonthInYear.Text = str + temp.ToString("##.00") + "°С";
-			lblPressMonthInYear.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindMonthInYear.Text = velocity.ToString("##.00") + " м/с";
+			lblTempMonthInYear.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressMonthInYear.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindMonthInYear.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetYearInfo()
@@ -300,37 +249,26 @@ namespace WeatherDiary
 			double press = 0.0;
 			double velocity = 0.0;
 			int days = 0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == Calendar.SelectionRange.Start.Year)
+				if (year.num != Calendar.SelectionRange.Start.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					foreach (Day day in month.days)
 					{
-						for (int k = 0; k < years[i].months[j].days.Length; k++)
-						{
-							temp += (double)years[i].months[j].days[k].temp;
-							press += (double)years[i].months[j].days[k].press;
-							velocity += (double)years[i].months[j].days[k].windVelocity;
-							days++;
-						}
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
 			}
-			temp = temp / (double)days;
-			press = press / (double)days;
-			velocity = velocity / (double)days;
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempYear.Text = str + temp.ToString("##.00") + "°С";
-			lblPressYear.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindYear.Text = velocity.ToString("##.00") + " м/с";
+			temp /= days;
+			press /= days;
+			velocity /= days;
+			lblTempYear.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressYear.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindYear.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetYearInYearInfo()
@@ -339,43 +277,32 @@ namespace WeatherDiary
 			{
 				return;
 			}
-			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day.ToString() +
-				"." + Calendar.SelectionRange.Start.Month.ToString() + "." + cbYearInYear.Text);
+			DateTime dt = Convert.ToDateTime(Calendar.SelectionRange.Start.Day +
+				"." + Calendar.SelectionRange.Start.Month + "." + cbYearInYear.Text);
 			double temp = 0.0;
 			double press = 0.0;
 			double velocity = 0.0;
 			int days = 0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num == dt.Year)
+				if (year.num != dt.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					foreach (Day day in month.days)
 					{
-						for (int k = 0; k < years[i].months[j].days.Length; k++)
-						{
-							temp += (double)years[i].months[j].days[k].temp;
-							press += (double)years[i].months[j].days[k].press;
-							velocity += (double)years[i].months[j].days[k].windVelocity;
-							days++;
-						}
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
 			}
-			temp = temp / (double)days;
-			press = press / (double)days;
-			velocity = velocity / (double)days;
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempYearInYear.Text = str + temp.ToString("##.00") + "°С";
-			lblPressYearInYear.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindYearInYear.Text = velocity.ToString("##.00") + " м/с";
+			temp /= days;
+			press /= days;
+			velocity /= days;
+			lblTempYearInYear.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressYearInYear.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindYearInYear.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetDayForecastInfo()
@@ -388,43 +315,28 @@ namespace WeatherDiary
 			double press = 0.0;
 			double velocity = 0.0;
 			int days = 0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num != Calendar.TodayDate.Year)
+				if (year.num == Calendar.TodayDate.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != Calendar.TodayDate.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == Calendar.TodayDate.Month)
-						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								if (years[i].months[j].days[k].num == Calendar.TodayDate.Day)
-								{
-									temp += (double)years[i].months[j].days[k].temp;
-									press += (double)years[i].months[j].days[k].press;
-									velocity += (double)years[i].months[j].days[k].windVelocity;
-									days++;
-								}
-							}
-						}
+						if (day.num != Calendar.TodayDate.Day) continue;
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
 			}
-			temp = temp / (double)days;
-			press = press / (double)days;
-			velocity = velocity / (double)days;
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempDayForecast.Text = str + temp.ToString("##.00") + "°С";
-			lblPressDayForecast.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindDayForecast.Text = velocity.ToString("##.00") + " м/с";
+			temp /= days;
+			press /= days;
+			velocity /= days;
+			lblTempDayForecast.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressDayForecast.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindDayForecast.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetMonthForecastInfo()
@@ -437,40 +349,27 @@ namespace WeatherDiary
 			double press = 0.0;
 			double velocity = 0.0;
 			int days = 0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num != Calendar.TodayDate.Year)
+				if (year.num == Calendar.TodayDate.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != Calendar.TodayDate.Month) continue;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == Calendar.TodayDate.Month)
-						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								temp += (double)years[i].months[j].days[k].temp;
-								press += (double)years[i].months[j].days[k].press;
-								velocity += (double)years[i].months[j].days[k].windVelocity;
-								days++;
-							}
-						}
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
 			}
-			temp = temp / (double)days;
-			press = press / (double)days;
-			velocity = velocity / (double)days;
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempMonthForecast.Text = str + temp.ToString("##.00") + "°С";
-			lblPressMonthForecast.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindMonthForecast.Text = velocity.ToString("##.00") + " м/с";
+			temp /= days;
+			press /= days;
+			velocity /= days;
+			lblTempMonthForecast.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressMonthForecast.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindMonthForecast.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetYearForecastInfo()
@@ -483,37 +382,26 @@ namespace WeatherDiary
 			double press = 0.0;
 			double velocity = 0.0;
 			int days = 0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num != Calendar.TodayDate.Year)
+				if (year.num == Calendar.TodayDate.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					foreach (Day day in month.days)
 					{
-						for (int k = 0; k < years[i].months[j].days.Length; k++)
-						{
-							temp += (double)years[i].months[j].days[k].temp;
-							press += (double)years[i].months[j].days[k].press;
-							velocity += (double)years[i].months[j].days[k].windVelocity;
-							days++;
-						}
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
 			}
-			temp = temp / (double)days;
-			press = press / (double)days;
-			velocity = velocity / (double)days;
-			String str = "";
-			if (temp > 0.0)
-			{
-				str = "+";
-			}
-			if (temp < 0.0)
-			{
-				str = "-";
-			}
-			lblTempYearForecast.Text = str + temp.ToString("##.00") + "°С";
-			lblPressYearForecast.Text = press.ToString("###.00") + " мм.рт.ст.";
-			lblWindYearForecast.Text = velocity.ToString("##.00") + " м/с";
+			temp /= days;
+			press /= days;
+			velocity /= days;
+			lblTempYearForecast.Text = (temp > 0.0 ? "+" : "") + temp.ToString("##.00") + @"°С";
+			lblPressYearForecast.Text = press.ToString("###.00") + @" мм.рт.ст.";
+			lblWindYearForecast.Text = velocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetDayMinMaxInfo()
@@ -528,56 +416,30 @@ namespace WeatherDiary
 			int maxi = 0, maxj = 0, maxk = 0;
 			for (int i = 0; i < years.Length; i++)
 			{
-				if (years[i].num != Calendar.SelectionRange.Start.Year)
+				if (years[i].num == Calendar.SelectionRange.Start.Year) continue;
+				for (int j = 0; j < years[i].months.Length; j++)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (years[i].months[j].num != Calendar.SelectionRange.Start.Month) continue;
+					for (int k = 0; k < years[i].months[j].days.Length; k++)
 					{
-						if (years[i].months[j].num == Calendar.SelectionRange.Start.Month)
+						if (years[i].months[j].days[k].num != Calendar.SelectionRange.Start.Day) continue;
+						if (years[i].months[j].days[k].temp > max)
 						{
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								if (years[i].months[j].days[k].num == Calendar.SelectionRange.Start.Day)
-								{
-									if (years[i].months[j].days[k].temp > max)
-									{
-										max = years[i].months[j].days[k].temp;
-										maxi = i; maxj = j; maxk = k;
-									}
-									if (years[i].months[j].days[k].temp < min)
-									{
-										min = years[i].months[j].days[k].temp;
-										mini = i; minj = j; mink = k;
-									}
-								}
-							}
+							max = years[i].months[j].days[k].temp;
+							maxi = i; maxj = j; maxk = k;
 						}
+						if (years[i].months[j].days[k].temp >= min) continue;
+						min = years[i].months[j].days[k].temp;
+						mini = i; minj = j; mink = k;
 					}
 				}
 			}
-			String str1 = "";
-			if (years[mini].months[minj].days[mink].temp > 0.0)
-			{
-				str1 = "+";
-			}
-			if (years[mini].months[minj].days[mink].temp < 0.0)
-			{
-				str1 = "-";
-			}
-			lblTempDayMin.Text = str1 + years[mini].months[minj].days[mink].temp.ToString() + "°С";
+			lblTempDayMin.Text = (years[mini].months[minj].days[mink].temp > 0.0 ? "+" : "") + years[mini].months[minj].days[mink].temp + @"°С";
 			lblPressDayMin.Text = years[mini].months[minj].days[mink].press.ToString();
-			lblWindDayMin.Text = years[mini].months[minj].days[mink].windVelocity.ToString() + " м/с";
-			String str2 = "";
-			if (years[maxi].months[maxj].days[maxk].temp > 0.0)
-			{
-				str2 = "+";
-			}
-			if (years[maxi].months[maxj].days[maxk].temp < 0.0)
-			{
-				str2 = "-";
-			}
-			lblTempDayMax.Text = str2 + years[maxi].months[maxj].days[maxk].temp.ToString() + "°С";
+			lblWindDayMin.Text = years[mini].months[minj].days[mink].windVelocity + @" м/с";
+			lblTempDayMax.Text = (years[maxi].months[maxj].days[maxk].temp > 0.0 ? "+" : "") + years[maxi].months[maxj].days[maxk].temp + @"°С";
 			lblPressDayMax.Text = years[maxi].months[maxj].days[maxk].press.ToString();
-			lblWindDayMax.Text = years[maxi].months[maxj].days[maxk].windVelocity.ToString() + " м/с";
+			lblWindDayMax.Text = years[maxi].months[maxj].days[maxk].windVelocity + @" м/с";
 		}
 
 		private void GetMonthMinMaxInfo()
@@ -588,61 +450,37 @@ namespace WeatherDiary
 			}
 			double mintemp = 1000.0, minpress = 0.0, minvelocity = 0.0;
 			double maxtemp = -1000.0, maxpress = 0.0, maxvelocity = 0.0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num != Calendar.SelectionRange.Start.Year)
+				if (year.num == Calendar.SelectionRange.Start.Year) continue;
+				foreach (Month month in year.months)
 				{
-					for (int j = 0; j < years[i].months.Length; j++)
+					if (month.num != Calendar.SelectionRange.Start.Month) continue;
+					double temp = 0.0;
+					double press = 0.0;
+					double velocity = 0.0;
+					foreach (Day day in month.days)
 					{
-						if (years[i].months[j].num == Calendar.SelectionRange.Start.Month)
-						{
-							double temp = 0.0;
-							double press = 0.0;
-							double velocity = 0.0;
-							for (int k = 0; k < years[i].months[j].days.Length; k++)
-							{
-								temp += (double)years[i].months[j].days[k].temp / (double)years[i].months[j].days.Length;
-								press += (double)years[i].months[j].days[k].press / (double)years[i].months[j].days.Length;
-								velocity += (double)years[i].months[j].days[k].windVelocity / (double)years[i].months[j].days.Length;
-							}
-							if (temp > maxtemp)
-							{
-								maxtemp = temp;
-								maxpress = press; maxvelocity = velocity;
-							}
-							if (temp < mintemp)
-							{
-								mintemp = temp;
-								minpress = press; minvelocity = velocity;
-							}
-						}
+						temp += (double)day.temp / month.days.Length;
+						press += (double)day.press / month.days.Length;
+						velocity += (double)day.windVelocity / month.days.Length;
 					}
+					if (temp > maxtemp)
+					{
+						maxtemp = temp;
+						maxpress = press; maxvelocity = velocity;
+					}
+					if (!(temp < mintemp)) continue;
+					mintemp = temp;
+					minpress = press; minvelocity = velocity;
 				}
 			}
-			String str1 = "";
-			if (mintemp > 0.0)
-			{
-				str1 = "+";
-			}
-			if (mintemp < 0.0)
-			{
-				str1 = "-";
-			}
-			lblTempMonthMin.Text = str1 + mintemp.ToString("##.00") + "°С";
+			lblTempMonthMin.Text = (mintemp > 0.0 ? "+" : "") + mintemp.ToString("##.00") + @"°С";
 			lblPressMonthMin.Text = minpress.ToString("###.00");
-			lblWindMonthMin.Text = minvelocity.ToString("##.00") + " м/с";
-			String str2 = "";
-			if (maxtemp > 0.0)
-			{
-				str2 = "+";
-			}
-			if (maxtemp < 0.0)
-			{
-				str2 = "-";
-			}
-			lblTempMonthMax.Text = str2 + maxtemp.ToString("##.00") + "°С";
+			lblWindMonthMin.Text = minvelocity.ToString("##.00") + @" м/с";
+			lblTempMonthMax.Text = (maxtemp > 0.0 ? "+" : "") + maxtemp.ToString("##.00") + @"°С";
 			lblPressMonthMax.Text = maxpress.ToString("###.00");
-			lblWindMonthMax.Text = maxvelocity.ToString("##.00") + " м/с";
+			lblWindMonthMax.Text = maxvelocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetYearMinMaxInfo()
@@ -653,63 +491,41 @@ namespace WeatherDiary
 			}
 			double mintemp = 1000.0, minpress = 0.0, minvelocity = 0.0;
 			double maxtemp = -1000.0, maxpress = 0.0, maxvelocity = 0.0;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				if (years[i].num != Calendar.SelectionRange.Start.Year)
+				if (year.num == Calendar.SelectionRange.Start.Year) continue;
+				double temp = 0.0;
+				double press = 0.0;
+				double velocity = 0.0;
+				int days = 0;
+				foreach (Month month in year.months)
 				{
-					double temp = 0.0;
-					double press = 0.0;
-					double velocity = 0.0;
-					int days = 0;
-					for (int j = 0; j < years[i].months.Length; j++)
+					foreach (Day day in month.days)
 					{
-						for (int k = 0; k < years[i].months[j].days.Length; k++)
-						{
-							temp += (double)years[i].months[j].days[k].temp;
-							press += (double)years[i].months[j].days[k].press;
-							velocity += (double)years[i].months[j].days[k].windVelocity;
-							days++;
-						}
-					}
-					temp = temp / (double)days;
-					press = press / (double)days;
-					velocity = velocity / (double)days;
-					if (temp > maxtemp)
-					{
-						maxtemp = temp;
-						maxpress = press; maxvelocity = velocity;
-					}
-					if (temp < mintemp)
-					{
-						mintemp = temp;
-						minpress = press; minvelocity = velocity;
+						temp += day.temp;
+						press += day.press;
+						velocity += day.windVelocity;
+						days++;
 					}
 				}
+				temp /= days;
+				press /= days;
+				velocity /= days;
+				if (temp > maxtemp)
+				{
+					maxtemp = temp;
+					maxpress = press; maxvelocity = velocity;
+				}
+				if (!(temp < mintemp)) continue;
+				mintemp = temp;
+				minpress = press; minvelocity = velocity;
 			}
-			String str1 = "";
-			if (mintemp > 0.0)
-			{
-				str1 = "+";
-			}
-			if (mintemp < 0.0)
-			{
-				str1 = "-";
-			}
-			lblTempYearMin.Text = str1 + mintemp.ToString("##.00") + "°С";
+			lblTempYearMin.Text = (mintemp > 0.0 ? "+" : "") + mintemp.ToString("##.00") + @"°С";
 			lblPressYearMin.Text = minpress.ToString("###.00");
-			lblWindYearMin.Text = minvelocity.ToString("##.00") + " м/с";
-			String str2 = "";
-			if (maxtemp > 0.0)
-			{
-				str2 = "+";
-			}
-			if (maxtemp < 0.0)
-			{
-				str2 = "-";
-			}
-			lblTempYearMax.Text = str2 + maxtemp.ToString("##.00") + "°С";
+			lblWindYearMin.Text = minvelocity.ToString("##.00") + @" м/с";
+			lblTempYearMax.Text = (maxtemp > 0.0 ? "+" : "") + maxtemp.ToString("##.00") + @"°С";
 			lblPressYearMax.Text = maxpress.ToString("###.00");
-			lblWindYearMax.Text = maxvelocity.ToString("##.00") + " м/с";
+			lblWindYearMax.Text = maxvelocity.ToString("##.00") + @" м/с";
 		}
 
 		private void GetAbsoluteMinMaxInfo()
@@ -720,76 +536,57 @@ namespace WeatherDiary
 			}
 			int mintemp = 1000, minpress = 1000, minvelocity = 1000;
 			int maxtemp = -1000, maxpress = -1000, maxvelocity = -1000;
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				for (int j = 0; j < years[i].months.Length; j++)
+				foreach (Month month in year.months)
 				{
-					for (int k = 0; k < years[i].months[j].days.Length; k++)
+					foreach (Day day in month.days)
 					{
-						if ((years[i].num != Calendar.TodayDate.Year) && (years[i].months[j].num != Calendar.TodayDate.Month) && (years[i].months[j].days[k].num != Calendar.TodayDate.Day))
+						if (year.num == Calendar.TodayDate.Year || month.num == Calendar.TodayDate.Month ||
+						    day.num == Calendar.TodayDate.Day) continue;
+						if (day.temp > maxtemp)
 						{
-							if (years[i].months[j].days[k].temp > maxtemp)
-							{
-								maxtemp = years[i].months[j].days[k].temp;
-							}
-							if (years[i].months[j].days[k].temp < mintemp)
-							{
-								mintemp = years[i].months[j].days[k].temp;
-							}
-							if (years[i].months[j].days[k].press > maxpress)
-							{
-								maxpress = years[i].months[j].days[k].press;
-							}
-							if (years[i].months[j].days[k].press < minpress)
-							{
-								minpress = years[i].months[j].days[k].press;
-							}
-							if (years[i].months[j].days[k].windVelocity > maxvelocity)
-							{
-								maxvelocity = years[i].months[j].days[k].windVelocity;
-							}
-							if (years[i].months[j].days[k].windVelocity < minvelocity)
-							{
-								minvelocity = years[i].months[j].days[k].windVelocity;
-							}
+							maxtemp = day.temp;
+						}
+						if (day.temp < mintemp)
+						{
+							mintemp = day.temp;
+						}
+						if (day.press > maxpress)
+						{
+							maxpress = day.press;
+						}
+						if (day.press < minpress)
+						{
+							minpress = day.press;
+						}
+						if (day.windVelocity > maxvelocity)
+						{
+							maxvelocity = day.windVelocity;
+						}
+						if (day.windVelocity < minvelocity)
+						{
+							minvelocity = day.windVelocity;
 						}
 					}
 				}
 			}
-			String str1 = "";
-			if (mintemp > 0.0)
-			{
-				str1 = "+";
-			}
-			if (mintemp < 0.0)
-			{
-				str1 = "-";
-			}
-			lblMinTemp.Text = str1 + mintemp.ToString() + "°С";
+			lblMinTemp.Text = (mintemp > 0.0 ? "+" : "") + mintemp + @"°С";
 			lblMinPress.Text = minpress.ToString();
-			lblMinWind.Text = minvelocity.ToString() + " м/с";
-			String str2 = "";
-			if (maxtemp > 0.0)
-			{
-				str2 = "+";
-			}
-			if (maxtemp < 0.0)
-			{
-				str2 = "-";
-			}
-			lblMaxTemp.Text = str2 + maxtemp.ToString() + "°С";
+			lblMinWind.Text = minvelocity + @" м/с";
+			lblMaxTemp.Text = (maxtemp > 0.0 ? "+" : "") + maxtemp + @"°С";
 			lblMaxPress.Text = maxpress.ToString();
-			lblMaxWind.Text = maxvelocity.ToString() + " м/с";
+			lblMaxWind.Text = maxvelocity + @" м/с";
 		}
 
 		private void MainForm_Shown(object sender, EventArgs e)
 		{
 			Open();
-			for (int i = 0; i < years.Length; i++)
+			foreach (Year year in years)
 			{
-				cbDayInYear.Items.Add(years[i].num);
-				cbMonthInYear.Items.Add(years[i].num);
-				cbYearInYear.Items.Add(years[i].num);
+				cbDayInYear.Items.Add(year.num);
+				cbMonthInYear.Items.Add(year.num);
+				cbYearInYear.Items.Add(year.num);
 			}
 			cbDayInYear.Sorted = true;
 			cbMonthInYear.Sorted = true;
@@ -873,20 +670,16 @@ namespace WeatherDiary
 			}
 			catch
 			{
-
+				//ignored
 			}
 			cbWind.Text = time[4].windDirection.ToLower();
-			int clear = 0, cloud = 0, mainlyCloud = 0;
+			int clear = 0, mainlyCloud = 0;
 			bool rain = false, snow = false, storm = false, hail = false;
 			for (int i = 2; i < 7; i++)
 			{
 				if (time[i].cloud.ToLower().Contains("ясно"))
 				{
 					clear++;
-				}
-				if (time[i].cloud.ToLower().Contains("облачно"))
-				{
-					cloud++;
 				}
 				if (time[i].cloud.ToLower().Contains("пасмурно"))
 				{
@@ -909,19 +702,19 @@ namespace WeatherDiary
 					hail = true;
 				}
 			}
-			if ((clear > 2) && (mainlyCloud == 0))
+			if (clear > 2 && mainlyCloud == 0)
 			{
-				cbCloud.Text = "ясно";
+				cbCloud.Text = @"ясно";
 			}
 			else
 			{
-				if ((mainlyCloud > 2) && (clear == 0))
+				if (mainlyCloud > 2 && clear == 0)
 				{
-					cbCloud.Text = "пасмурно";
+					cbCloud.Text = @"пасмурно";
 				}
 				else
 				{
-					cbCloud.Text = "облачно";
+					cbCloud.Text = @"облачно";
 				}
 			}
 			if (!rain && !snow && !storm && !hail)
@@ -930,41 +723,31 @@ namespace WeatherDiary
 			}
 			if (rain && !snow && !storm && !hail)
 			{
-				cbPrec.Text = "дождь";
+				cbPrec.Text = @"дождь";
 			}
-			if (!rain && snow && !storm && !hail)
+			if (!rain && snow && !storm)
 			{
-				cbPrec.Text = "снег";
+				cbPrec.Text = @"снег";
 			}
 			if (!rain && !snow && storm && !hail)
 			{
-				cbPrec.Text = "гроза";
+				cbPrec.Text = @"гроза";
 			}
 			if (!rain && !snow && !storm && hail)
 			{
-				cbPrec.Text = "град";
+				cbPrec.Text = @"град";
 			}
 			if (rain && snow && !storm && !hail)
 			{
-				cbPrec.Text = "дождь со снегом";
+				cbPrec.Text = @"дождь со снегом";
 			}
 			if (rain && !snow && storm && !hail)
 			{
-				cbPrec.Text = "дождь с грозой";
+				cbPrec.Text = @"дождь с грозой";
 			}
 		}
 
-		private String ValidateAndCorrect(String value)
-		{
-			return WebUtility.HtmlDecode(value);
-		}
-
-		private String Trim(String text)
-		{
-			return text.Trim(new char[] { ' ', '\r', '\n' });
-		}
-
-		private String GetHtml(String adress)
+		private string GetHtml(string adress)
 		{
 			WebRequest.DefaultWebProxy = new WebProxy();
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(adress);
@@ -974,10 +757,10 @@ namespace WeatherDiary
 			request.Headers.Add("Accept-Charset: Windows-1251,utf-8;q=0.7,*;q=0.7");
 			using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
 			{
-				string encoding = response.Headers["Content-Type"].ToString().Split(new string[] { "charset=" }, StringSplitOptions.RemoveEmptyEntries)[1];
+				string encoding = response.Headers["Content-Type"].Split(new[] { "charset=" }, StringSplitOptions.RemoveEmptyEntries)[1];
 				StringBuilder sb = new StringBuilder();
 				byte[] buf = new byte[8192];
-				int b = 0;
+				int b;
 				Stream resStream = response.GetResponseStream();
 				do
 				{
@@ -1015,13 +798,13 @@ namespace WeatherDiary
 				// ignored
 			}
 
-			Time[] time = new Time[9];
-			for (int i = 0; i < 9; i++)
+			Time[] time = new Time[8];
+			for (int i = 0; i < 8; i++)
 			{
 				time[i] = new Time
 				{
 					title = $"{divTime?[0].ChildNodes[i].ChildNodes[0].FirstChild.InnerText}:{divTime?[0].ChildNodes[i].ChildNodes[0].LastChild.InnerText}",
-					cloud = divCloud?[0].ChildNodes[i].ChildNodes[1].InnerText,
+					cloud = divCloud?[0].ChildNodes[i].ChildNodes[0].Attributes["data-text"].Value,
 					temp = divTemp?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value,
 					windVelocity = divWind?[0].ChildNodes[i + 1].ChildNodes[1].Attributes["data-value"].Value,
 					windDirection = ""
