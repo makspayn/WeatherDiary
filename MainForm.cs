@@ -788,7 +788,7 @@ namespace WeatherDiary
 			try
 			{
 				divTime = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line timeline clearfix')]");
-				divCloud = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line iconline clearfix')]");
+				divCloud = doc.DocumentNode.SelectNodes("//*[contains(@class,'forecast_wrap horizontal')]");
 				divTemp = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line templine clearfix')]");
 				divWind = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line windline js_wind clearfix')]");
 				divPress = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line nil pressureline_wrap js_pressure clearfix')]");
@@ -804,7 +804,7 @@ namespace WeatherDiary
 				time[i] = new Time
 				{
 					title = $"{divTime?[0].ChildNodes[i].ChildNodes[0].FirstChild.InnerText}:{divTime?[0].ChildNodes[i].ChildNodes[0].LastChild.InnerText}",
-					cloud = divCloud?[0].ChildNodes[i].ChildNodes[0].Attributes["data-text"].Value,
+					cloud = divCloud?[0].ChildNodes[0].ChildNodes[i].Attributes["data-text"].Value,
 					temp = divTemp?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value,
 					windVelocity = divWind?[0].ChildNodes[i + 1].ChildNodes[1].Attributes["data-value"].Value,
 					windDirection = ""
