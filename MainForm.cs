@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using HtmlAgilityPack;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace WeatherDiary
 {
@@ -776,7 +777,7 @@ namespace WeatherDiary
 
 		private void btnLoad_Click(object sender, EventArgs e)
 		{
-			string htmlCode = GetHtml("https://www.gismeteo.ru/weather-kirov-4292/#/wind.precipitation.pressure.humidity/");
+			string htmlCode = GetHtml("https://www.gismeteo.ru/weather-kirov-4292/");
 			HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
 			doc.LoadHtml(htmlCode);
 
@@ -788,10 +789,10 @@ namespace WeatherDiary
 			try
 			{
 				divTime = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line timeline clearfix')]");
-				divCloud = doc.DocumentNode.SelectNodes("//*[contains(@class,'forecast_wrap horizontal')]");
+				divCloud = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line iconline clearfix')]");
 				divTemp = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line templine clearfix')]");
-				divWind = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line windline js_wind clearfix')]");
-				divPress = doc.DocumentNode.SelectNodes("//*[contains(@class,'_line nil pressureline_wrap js_pressure clearfix')]");
+				divWind = doc.DocumentNode.SelectNodes("//*[contains(@class,'widget__row widget__row_table')]");
+				divPress = doc.DocumentNode.SelectNodes("//*[contains(@class,'js_pressure pressureline w_pressure')]");
 			}
 			catch
 			{
@@ -804,28 +805,32 @@ namespace WeatherDiary
 				time[i] = new Time
 				{
 					title = $"{divTime?[0].ChildNodes[i].ChildNodes[0].FirstChild.InnerText}:{divTime?[0].ChildNodes[i].ChildNodes[0].LastChild.InnerText}",
-					cloud = divCloud?[0].ChildNodes[0].ChildNodes[i].Attributes["data-text"].Value,
+					cloud = ConvertCloud(divCloud?[0].ChildNodes[i].ChildNodes[0].Attributes["data-text"].Value),
 					temp = divTemp?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value,
-					windVelocity = divWind?[0].ChildNodes[i + 1].ChildNodes[1].Attributes["data-value"].Value,
-					windDirection = ""
+					windVelocity = divWind?[0].ChildNodes[i].ChildNodes[0].ChildNodes[0].Attributes["data-value"].Value,
+					windDirection = ConvertWindDirection(divWind?[0].ChildNodes[i].ChildNodes[0].ChildNodes[2].InnerText),
+					press = divPress?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value
 				};
-				foreach (HtmlNode node in divWind?[0].ChildNodes[i + 1].ChildNodes[1].ChildNodes)
-				{
-					foreach (HtmlAttribute attribute in node.Attributes.Where(attribute => attribute.Value == "item_unit"))
-					{
-						if (node.InnerText == "штиль")
-						{
-							time[i].windDirection = "ш";
-							break;
-						}
-						time[i].windDirection = node.InnerText;
-						break;
-					}
-				}
-				time[i].press = divPress?[0].ChildNodes[1].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value;
 			}
 
 			WeatherToForm(time);
+		}
+
+		private string ConvertCloud(string cloud)
+		{
+			Regex regex = new Regex("\n            <nobr>(\\w*)</nobr>\n                    ");
+			return regex.Match(cloud.ToLower()).Groups[1].Value;
+		}
+
+		private string ConvertWindDirection(string windDirection)
+		{
+			Regex regex = new Regex("\n                    (\\w*)\n            ");
+			string newWindDirection = regex.Match(windDirection.ToLower()).Groups[1].Value;
+			if (newWindDirection == "штиль")
+			{
+				newWindDirection = "ш";
+			}
+			return newWindDirection;
 		}
 	}
 }
