@@ -6,6 +6,7 @@ using HtmlAgilityPack;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace WeatherDiary
 {
@@ -662,16 +663,9 @@ namespace WeatherDiary
 
 		private void WeatherToForm(Time[] time)
 		{
-			try
-			{
-				tbTemp.Text = Convert.ToInt32(time[4].temp).ToString();
-				tbPress.Text = Convert.ToInt32(time[4].press).ToString();
-				tbWind.Text = Convert.ToInt32(time[4].windVelocity).ToString();
-			}
-			catch
-			{
-				//ignored
-			}
+			tbTemp.Text = time[4].temp;
+			tbPress.Text = time[4].press;
+			tbWind.Text = time[4].windVelocity;
 			cbWind.Text = time[4].windDirection.ToLower();
 			int clear = 0, mainlyCloud = 0;
 			bool rain = false, snow = false, storm = false, hail = false;
@@ -788,11 +782,11 @@ namespace WeatherDiary
 			try
 			{
 				divTime = doc.DocumentNode.SelectNodes("//*[@data-widget-name='Погода']");
-				divCloud = doc.DocumentNode.SelectNodes("//*[contains(@class,'widget__wrap')]");
+				divCloud = doc.DocumentNode.SelectNodes("//*[@data-widget-name='Погода']");
 				divTemp = doc.DocumentNode.SelectNodes("//*[contains(@class,'templine w_temperature')]");
 				divWind = doc.DocumentNode.SelectNodes("//*[@data-widget-name='Ветер']");
 				divPress = doc.DocumentNode.SelectNodes("//*[contains(@class,'js_pressure pressureline w_pressure')]");
-			}
+			} 
 			catch
 			{
 				// ignored
@@ -803,13 +797,13 @@ namespace WeatherDiary
 			{
 				time[i] = new Time
 				{
-					title = $"{divTime?[0].FirstChild.FirstChild.FirstChild.ChildNodes[i].FirstChild.ChildNodes[0].InnerText}:" + 
+					title = $"{divTime?[0].FirstChild.FirstChild.FirstChild.ChildNodes[i].FirstChild.FirstChild.InnerText}:" + 
 					        $"{divTime?[0].FirstChild.FirstChild.FirstChild.ChildNodes[i].FirstChild.ChildNodes[1].InnerText}",
-					cloud = divCloud?[0].FirstChild.FirstChild.ChildNodes[i].Attributes["data-text"].Value,
-					temp = divTemp?[0].FirstChild.ChildNodes[1].ChildNodes[i].InnerText,
-					windVelocity = divWind?[0].ChildNodes[1].ChildNodes[1].ChildNodes[1].ChildNodes[i].ChildNodes[0].ChildNodes[0].Attributes["data-value"].Value,
-					windDirection = ConvertWindDirection(divWind?[0].ChildNodes[1].ChildNodes[1].ChildNodes[1].ChildNodes[i].ChildNodes[0].ChildNodes[2].InnerText),
-					press = divPress?[0].ChildNodes[0].ChildNodes[i + 1].Attributes["data-value"].Value
+					cloud = divCloud?[0].FirstChild.FirstChild.ChildNodes[1].ChildNodes[i].FirstChild.FirstChild.Attributes["data-text"].Value,
+					temp = HttpUtility.HtmlDecode(divTemp?[0].FirstChild.FirstChild.ChildNodes[i].InnerText),
+					windVelocity = divWind?[0].ChildNodes[1].ChildNodes[1].ChildNodes[1].ChildNodes[i].FirstChild.FirstChild.Attributes["data-value"].Value,
+					windDirection = ConvertWindDirection(divWind?[0].ChildNodes[1].ChildNodes[1].ChildNodes[1].ChildNodes[i].FirstChild.ChildNodes[2].InnerText),
+					press = divPress?[0].FirstChild.FirstChild.ChildNodes[i].InnerText
 				};
 			}
 
